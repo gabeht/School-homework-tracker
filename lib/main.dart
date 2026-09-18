@@ -41,22 +41,33 @@ class _SplashScreenState extends State<SplashScreen>{
         ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     });
   }
-  
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue,
       body: Center(
-        child: Text(
-          'Homework Tracker',
-          style: TextStyle(
-            fontSize: 28,
-            color: Colors.white,
-            fontWeight:FontWeight.bold,
-          ),
-          ),
-          ),
-          );
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Homework Tracker',
+              style: TextStyle(
+              fontSize: 28,
+              color: Colors.white,
+              fontWeight:FontWeight.bold,
+            ),
+            ),
+            const SizedBox(height: 24),
+            LoadingAnimationWidget.inkDrop(
+              color: Colors.white,
+              size: 60,
+            ),
+          ],
+        ),
+      ),
+    );
   }
+
 }
