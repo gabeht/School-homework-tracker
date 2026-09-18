@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 
 void main() {
