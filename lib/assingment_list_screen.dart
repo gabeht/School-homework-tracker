@@ -49,11 +49,46 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
       },
     );
   }   
-  void _toggleCompleted(int index, bool? value){
+
+  void _toggleCompleted(int index, bool? value) async {
+  
+  //False boolean check to verify if the assingment has been completed
+  if (value != true) {
     setState((){
-      _assingments[index]['completed'] = value ?? false;
+      _assingments[index]['completed'] = false;
+    });
+    return;
+  }
+// main "meat" of interaction that prints the dialog chosen from previous booleans
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Mark as Completed?'),
+        content: Text('Has "${_assingments[index]['title']}" been completed?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Nope..Not yet!'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes! All Done!'),
+          ),
+        ],
+      );
+    },
+  );
+
+// True Boolean to confirm assingment has been completed
+  if (confirmed == true) {
+    setState((){
+      _assingments[index]['completed'] = true;
     });
   }
+}
+  
+  
   @override
   Widget build(BuildContext context){
     return Scaffold(
