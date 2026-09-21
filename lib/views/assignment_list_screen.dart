@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../presenters/assignment_presenter.dart';
 
 class AssignmentListScreen extends StatefulWidget{
   const AssignmentListScreen({super.key});
@@ -9,7 +10,7 @@ class AssignmentListScreen extends StatefulWidget{
 
 class _AssignmentListScreenState extends State<AssignmentListScreen>{
 
-  final List<Map<String, dynamic>> _assignments = [];
+  final AssignmentPresenter _presenter = AssignmentPresenter();
   void _showAddAssignmentDialog(){
     String newAssignmentTitle = '';
 
@@ -34,10 +35,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
               onPressed: () {
                 if (newAssignmentTitle.trim().isNotEmpty){
                   setState((){
-                    _assignments.add({
-                      'title': newAssignmentTitle.trim(),
-                      'completed' : false,
-                    });
+                    _presenter.addAssigment(newAssignmentTitle.trim());
                   });
                 }
                 Navigator.pop(context);
@@ -50,56 +48,26 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
     );
   }   
 
-  void _toggleCompleted(int index, bool? value) async {
-  
-  //False boolean check to verify if the assignment has been completed
-  if (value != true) {
-    setState((){
-      _assignments[index]['completed'] = false;
-    });
-    return;
-  }
-// main "meat" of interaction that prints the dialog chosen from previous booleans
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Mark as Completed?'),
-        content: Text('Has "${_assignments[index]['title']}" been completed?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Nope..Not yet!'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes! All Done!'),
-          ),
-        ],
-      );
-    },
-  );
-
-// True Boolean to confirm assignment has been completed
-  if (confirmed == true) {
-    setState((){
-      _assignments[index]['completed'] = true;
-    });
-  }
-}
   
   
   @override
   Widget build(BuildContext context){
+    final assignments = _presenter.assignments;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Assignments')),
       body: ListView.builder(
-        itemCount: _assignments.length,
+        itemCount: assignments.length,
         itemBuilder: (context, index){
+          final assignment = assignments[index];
           return CheckboxListTile(
-            title: Text(_assignments[index]['title']),
-            value: _assignments[index]['completed'],
-            onChanged: (value) => _toggleCompleted(index,value),
+            title: Text(assignment.title),
+            value: assignment.isCompleted,
+            onChanged: (value) {
+              setState(() {
+                _presenter.toggleCompleted(index);
+              });
+            }
           );
         },
       ),
