@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 
-class AssingmentListScreen extends StatefulWidget{
-  const AssingmentListScreen({super.key});
+class AssignmentListScreen extends StatefulWidget{
+  const AssignmentListScreen({super.key});
 
   @override
-  State<AssingmentListScreen> createState() => _AssingmentListScreenState();
+  State<AssignmentListScreen> createState() => _AssignmentListScreenState();
 }
 
-class _AssingmentListScreenState extends State<AssingmentListScreen>{
+class _AssignmentListScreenState extends State<AssignmentListScreen>{
 
-  final List<Map<String, dynamic>> _assingments = [];
-  void _showAddAssingmentDialog(){
-    String newAssingmentTitle = '';
+  final List<Map<String, dynamic>> _assignments = [];
+  void _showAddAssignmentDialog(){
+    String newAssignmentTitle = '';
 
     showDialog(
       context: context,
       builder: (context){
         return AlertDialog(
-          title: const Text('Add New Assingment'),
+          title: const Text('Add New Assignment'),
           content: TextField(
             autofocus: true,
-            decoration : const InputDecoration(hintText: 'Enter Assingment Name'),
+            decoration : const InputDecoration(hintText: 'Enter Assignment Name'),
             onChanged: (value){
-              newAssingmentTitle = value;
+              newAssignmentTitle = value;
             },
           ),
           actions: [
@@ -32,10 +32,10 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
             ),
             TextButton(
               onPressed: () {
-                if (newAssingmentTitle.trim().isNotEmpty){
+                if (newAssignmentTitle.trim().isNotEmpty){
                   setState((){
-                    _assingments.add({
-                      'title': newAssingmentTitle.trim(),
+                    _assignments.add({
+                      'title': newAssignmentTitle.trim(),
                       'completed' : false,
                     });
                   });
@@ -52,10 +52,10 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
 
   void _toggleCompleted(int index, bool? value) async {
   
-  //False boolean check to verify if the assingment has been completed
+  //False boolean check to verify if the assignment has been completed
   if (value != true) {
     setState((){
-      _assingments[index]['completed'] = false;
+      _assignments[index]['completed'] = false;
     });
     return;
   }
@@ -65,7 +65,7 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
     builder: (context) {
       return AlertDialog(
         title: const Text('Mark as Completed?'),
-        content: Text('Has "${_assingments[index]['title']}" been completed?'),
+        content: Text('Has "${_assignments[index]['title']}" been completed?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -80,10 +80,10 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
     },
   );
 
-// True Boolean to confirm assingment has been completed
+// True Boolean to confirm assignment has been completed
   if (confirmed == true) {
     setState((){
-      _assingments[index]['completed'] = true;
+      _assignments[index]['completed'] = true;
     });
   }
 }
@@ -92,19 +92,19 @@ class _AssingmentListScreenState extends State<AssingmentListScreen>{
   @override
   Widget build(BuildContext context){
     return Scaffold(
-      appBar: AppBar(title: const Text('Assingments')),
+      appBar: AppBar(title: const Text('Assignments')),
       body: ListView.builder(
-        itemCount: _assingments.length,
+        itemCount: _assignments.length,
         itemBuilder: (context, index){
           return CheckboxListTile(
-            title: Text(_assingments[index]['title']),
-            value: _assingments[index]['completed'],
+            title: Text(_assignments[index]['title']),
+            value: _assignments[index]['completed'],
             onChanged: (value) => _toggleCompleted(index,value),
           );
         },
       ),
       floatingActionButton : FloatingActionButton(
-        onPressed: _showAddAssingmentDialog,
+        onPressed: _showAddAssignmentDialog,
         child: const Icon(Icons.add),
       ),
     );
