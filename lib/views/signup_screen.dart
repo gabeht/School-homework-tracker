@@ -19,6 +19,16 @@ class _SignUpScreenState extends State<SignUpScreen>{
   String? _errorMessage;
 
   void _handleSignUp() async {
+        // Validation: check email format and password length before calling Firebase
+    final email = _emailController.text.trim();
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _errorMessage = 'Please enter a valid email address.');
+      return;
+    }
+    if (_passwordController.text.trim().length < 8) {
+      setState(() => _errorMessage = 'Password must be at least 8 characters.');
+      return;
+    }
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
