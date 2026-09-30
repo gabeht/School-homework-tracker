@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homework_tracker/models/assignment_model.dart';
 import '../presenters/assignment_presenter.dart';
 
 class AssignmentListScreen extends StatefulWidget{
@@ -11,6 +12,20 @@ class AssignmentListScreen extends StatefulWidget{
 class _AssignmentListScreenState extends State<AssignmentListScreen>{
 
   final AssignmentPresenter _presenter = AssignmentPresenter();
+  bool _isLoading = true;
+
+  @override
+  void initState(){
+    super.initState();
+    _loadAssignments();
+  }
+
+  Future<void> _loadAssignments() async{
+    await _presenter.loadAssignments();
+    setState(() => _isLoading = false);
+
+  }
+
   void _showAddAssignmentDialog(){
     String newAssignmentTitle = '';
     DateTime? newAssignmentDueDate;
@@ -60,11 +75,10 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (newAssignmentTitle.trim().isNotEmpty){
-                      setState((){
-                        _presenter.addAssigment(newAssignmentTitle.trim(), dueDate: newAssignmentDueDate);
-                      });
+                      await _presenter.addAssignment(newAssignmentTitle.trim());
+                      setState(() {});
                     }
                     Navigator.pop(context);
                   },
@@ -86,24 +100,23 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
 
     return Scaffold(
       appBar: AppBar(title: const Text('Assignments')),
-      body: ListView.builder(
-        itemCount: assignments.length,
-        itemBuilder: (context, index){
-          final assignment = assignments[index];
-          return CheckboxListTile(
-            title: Text(assignment.title),
-            subtitle: assignment.dueDate != null
-                ? Text('Due: ${assignment.dueDate!.month}/${assignment.dueDate!.day}/${assignment.dueDate!.year}')
-                : null,
-            value: assignment.isCompleted,
-            onChanged: (value) {
-              setState(() {
-                _presenter.toggleCompleted(index);
-              });
-            }
-          );
-        },
-      ),
+      body: 
+          _isLoading ? const Center(child:CircularProgressIndicator())
+          : ListView.builder(
+            itemCount: assignments.length,
+            itemBuilder: (context,index){
+              final assignment = assignments[index];
+              return CheckboxListTile(
+                title : Text(assignment.title),
+                value: assignment.isCompleted,
+                onChanged: (_) async {
+                  await _presenter.toggleCompleted(index);
+                  setState((){});
+                },
+              );
+            },
+          ),
+      
       floatingActionButton : FloatingActionButton(
         onPressed: _showAddAssignmentDialog,
         child: const Icon(Icons.add),
