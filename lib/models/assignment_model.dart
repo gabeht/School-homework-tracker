@@ -4,11 +4,13 @@ import 'package:firebase_database/firebase_database.dart';
 class Assignment{
   final String title;
   bool isCompleted;
+  final String courseName;
   DateTime? dueDate;
 
   Assignment({
     required this.title,
     this.isCompleted = false,
+    required this.courseName,
     this.dueDate,
   });
 
@@ -25,8 +27,10 @@ class Assignment{
     if (snapshot.exists){
       final data = Map<String, dynamic>.from(snapshot.value as Map);
       data.forEach((key,value){
-        assignments.add(Assignment(title: value['title'],
+        assignments.add(Assignment(
+        title: value['title'],
         isCompleted: value['isCompleted'],
+        courseName: value['courseName'] ?? 'Unknown',
         ));
       });
     }
@@ -34,13 +38,14 @@ class Assignment{
   }
 
 
-  static Future<void> addAssignment(String title) async{
+  static Future<void> addAssignment(String title, String courseName) async{
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
     final newRef = _db.child('assignments/$userId').push();
     await newRef.set({
       'title': title,
+      'courseName': courseName,
       'isCompleted': false,
     });
   }
