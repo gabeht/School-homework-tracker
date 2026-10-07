@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:homework_tracker/models/assignment_model.dart';
+
 import '../presenters/assignment_presenter.dart';
 
-class AssignmentListScreen extends StatefulWidget{
+class AssignmentListScreen extends StatefulWidget {
   const AssignmentListScreen({super.key});
 
   @override
   State<AssignmentListScreen> createState() => _AssignmentListScreenState();
 }
 
-class _AssignmentListScreenState extends State<AssignmentListScreen>{
-
+class _AssignmentListScreenState extends State<AssignmentListScreen> {
   final AssignmentPresenter _presenter = AssignmentPresenter();
   bool _isLoading = true;
+  String searchQuery = '';
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     _loadAssignments();
   }
 
-  Future<void> _loadAssignments() async{
+  Future<void> _loadAssignments() async {
     await _presenter.loadAssignments();
     setState(() => _isLoading = false);
-
   }
 
-  void _showAddAssignmentDialog(){
+  void _showAddAssignmentDialog() {
     String newAssignmentTitle = '';
     DateTime? newAssignmentDueDate;
 
     showDialog(
       context: context,
-      builder: (context){
+      builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -42,8 +42,10 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
                 children: [
                   TextField(
                     autofocus: true,
-                    decoration : const InputDecoration(hintText: 'Enter Assignment Name'),
-                    onChanged: (value){
+                    decoration: const InputDecoration(
+                      hintText: 'Enter Assignment Name',
+                    ),
+                    onChanged: (value) {
                       newAssignmentTitle = value;
                     },
                   ),
@@ -56,7 +58,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
                         lastDate: DateTime(2100),
                       );
                       if (picked != null) {
-                        setDialogState((){
+                        setDialogState(() {
                           newAssignmentDueDate = picked;
                         });
                       }
@@ -76,7 +78,7 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
                 ),
                 TextButton(
                   onPressed: () async {
-                    if (newAssignmentTitle.trim().isNotEmpty){
+                    if (newAssignmentTitle.trim().isNotEmpty) {
                       await _presenter.addAssignment(newAssignmentTitle.trim());
                       setState(() {});
                     }
@@ -90,34 +92,55 @@ class _AssignmentListScreenState extends State<AssignmentListScreen>{
         );
       },
     );
-  }   
+  }
 
-  
-  
   @override
-  Widget build(BuildContext context){
-    final assignments = _presenter.assignments;
+  Widget build(BuildContext context) {
+    final query = searchQuery.toLowerCase();
+    final assignments = _presenter.assignments
+        .where((a) => a.title.toLowerCase().contains(query))
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Assignments')),
-      body: 
-          _isLoading ? const Center(child:CircularProgressIndicator())
-          : ListView.builder(
-            itemCount: assignments.length,
-            itemBuilder: (context,index){
-              final assignment = assignments[index];
-              return CheckboxListTile(
-                title : Text(assignment.title),
-                value: assignment.isCompleted,
-                onChanged: (_) async {
-                  await _presenter.toggleCompleted(index);
-                  setState((){});
-                },
-              );
-            },
-          ),
-      
-      floatingActionButton : FloatingActionButton(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search assignments',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) => setState(() => searchQuery = value),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: assignments.length,
+                    itemBuilder: (context, index) {
+                      final assignment = assignments[index];
+                      return CheckboxListTile(
+                        title: Text(assignment.title),
+                        value: assignment.isCompleted,
+                        onChanged: (_) async {
+                          final realIndex = _presenter.assignments.indexOf(
+                            assignment,
+                          );
+                          await _presenter.toggleCompleted(realIndex);
+                          setState(() {});
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+      floatingActionButton: FloatingActionButton(
         onPressed: _showAddAssignmentDialog,
         child: const Icon(Icons.add),
       ),
