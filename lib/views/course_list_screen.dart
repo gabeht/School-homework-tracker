@@ -12,6 +12,7 @@ class CourseListScreen extends StatefulWidget {
 class _CourseListScreenState extends State<CourseListScreen> {
   final CoursePresenter presenter = CoursePresenter();
   bool _isLoading = true;
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -71,22 +72,43 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final courses = presenter.courses;
+    final query = searchQuery.toLowerCase();
+    final courses = presenter.courses.where((course) {
+      return course.name.toLowerCase().contains(query) ||
+          (course.description?.toLowerCase().contains(query) ?? false);
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Courses')),
-      body: _isLoading
+            body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: courses.length,
-              itemBuilder: (context, index) {
-                final course = courses[index];
-                return ListTile(
-                  title: Text(course.name),
-                  subtitle: course.description != null
-                      ? Text(course.description!): null,
-                );
-              },
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Search courses',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) => setState(() => searchQuery = value),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: courses.length,
+                    itemBuilder: (context, index) {
+                      final course = courses[index];
+                      return ListTile(
+                        title: Text(course.name),
+                        subtitle: course.description != null
+                            ? Text(course.description!) : null,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCourseDialog,
