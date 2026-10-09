@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homework_tracker/models/assignment_model.dart';
-
+import '../widgets/add_fab.dart';
 import '../presenters/assignment_presenter.dart';
 import '../presenters/course_presenter.dart';
 
@@ -200,9 +200,8 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
               ],
             ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddAssignmentDialog,
-        child: const Icon(Icons.add),
+      floatingActionButton: AddFAB(
+        onPressed: _showAddAssignmentDialog
       ),
     );
   }
