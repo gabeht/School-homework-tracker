@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:homework_tracker/models/assignment_model.dart';
-
+import '../widgets/add_fab.dart';
 import '../presenters/assignment_presenter.dart';
+import '../presenters/course_presenter.dart';
 
 class AssignmentListScreen extends StatefulWidget {
   const AssignmentListScreen({super.key});
@@ -11,23 +12,40 @@ class AssignmentListScreen extends StatefulWidget {
 }
 
 class _AssignmentListScreenState extends State<AssignmentListScreen> {
-  final AssignmentPresenter _presenter = AssignmentPresenter();
+  final AssignmentPresenter _assignmentPresenter = AssignmentPresenter();
+  final CoursePresenter _coursePresenter = CoursePresenter();
+  
   bool _isLoading = true;
   String searchQuery = '';
+  String? _selectedCourseFilter;
+  String? _newAssignmentCourse;
+  List<String> _courseNames = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAssignments();
+    _loadData();
+  }
+
+  Future<void> _loadData() async{
+    await _coursePresenter.loadCourses();
+    await _assignmentPresenter.loadAssignments();
+
+    setState((){
+      _isLoading = false;
+      _courseNames = _coursePresenter.courses.map((c) => c.name).toList();
+    });
   }
 
   Future<void> _loadAssignments() async {
-    await _presenter.loadAssignments();
+    await _assignmentPresenter.loadAssignments();
     setState(() => _isLoading = false);
   }
 
   void _showAddAssignmentDialog() {
     String newAssignmentTitle = '';
+    _newAssignmentCourse = _courseNames.isNotEmpty ? _courseNames.first : null;
+
     DateTime? newAssignmentDueDate;
 
     showDialog(
@@ -41,13 +59,20 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
-                    autofocus: true,
                     decoration: const InputDecoration(
-                      hintText: 'Enter Assignment Name',
+                      hintText: 'Enter assignment title',
                     ),
-                    onChanged: (value) {
-                      newAssignmentTitle = value;
-                    },
+                    onChanged: (value) => newAssignmentTitle = value,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButton<String>(
+                    value: _newAssignmentCourse,
+                    items:
+                        _courseNames.map((name) {
+                          return DropdownMenuItem(value: name, child: Text(name));
+                        }).toList(),
+                    onChanged:
+                        (value) => setState(() => _newAssignmentCourse = value),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -78,11 +103,15 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    if (newAssignmentTitle.trim().isNotEmpty) {
-                      await _presenter.addAssignment(newAssignmentTitle.trim());
+                    if (newAssignmentTitle.trim().isNotEmpty &&
+                        _newAssignmentCourse != null) {
+                      await _assignmentPresenter.addAssignment(
+                        newAssignmentTitle.trim(),
+                        _newAssignmentCourse!,
+                      );
                       setState(() {});
+                      Navigator.pop(context);
                     }
-                    Navigator.pop(context);
                   },
                   child: const Text('Add'),
                 ),
@@ -97,12 +126,45 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
   @override
   Widget build(BuildContext context) {
     final query = searchQuery.toLowerCase();
-    final assignments = _presenter.assignments
+    final assignments = _assignmentPresenter.assignments
         .where((a) => a.title.toLowerCase().contains(query))
         .toList();
+    final displayedAssignments =
+        _selectedCourseFilter == null
+            ? assignments
+            : assignments
+                .where((a) => a.courseName == _selectedCourseFilter)
+                .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Assignments')),
+      appBar: AppBar(
+        title: const Text('Assignments'),
+        actions: [
+          if (_courseNames.isNotEmpty)
+            DropdownButton<String>(
+              hint: const Text(
+                'Filter by course',
+                style: TextStyle(color: Colors.white),
+              ),
+              dropdownColor: Colors.blue[100],
+              value: _selectedCourseFilter,
+              onChanged: (value) {
+                setState(() {
+                  _selectedCourseFilter = value;
+                });
+              },
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('All Courses'),
+                ),
+                ..._courseNames.map(
+                  (name) => DropdownMenuItem(value: name, child: Text(name)),
+                ),
+              ],
+            ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -120,17 +182,15 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: assignments.length,
+                    itemCount: displayedAssignments.length,
                     itemBuilder: (context, index) {
-                      final assignment = assignments[index];
+                      final assignment = displayedAssignments[index];
                       return CheckboxListTile(
                         title: Text(assignment.title),
+                        subtitle: Text('Course: ${assignment.courseName}'),
                         value: assignment.isCompleted,
                         onChanged: (_) async {
-                          final realIndex = _presenter.assignments.indexOf(
-                            assignment,
-                          );
-                          await _presenter.toggleCompleted(realIndex);
+                          await _assignmentPresenter.toggleCompleted(index);
                           setState(() {});
                         },
                       );
@@ -140,9 +200,8 @@ class _AssignmentListScreenState extends State<AssignmentListScreen> {
               ],
             ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddAssignmentDialog,
-        child: const Icon(Icons.add),
+      floatingActionButton: AddFAB(
+        onPressed: _showAddAssignmentDialog
       ),
     );
   }
